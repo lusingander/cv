@@ -4,6 +4,7 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"sort"
 )
 
 func RGB2BGR(src image.Image) image.Image {
@@ -132,6 +133,43 @@ func Gaussian(src image.Image, sigma float64, kernelSize int) image.Image {
 		}
 	}
 	return dst
+}
+
+func Median(src image.Image, kernelSize int) image.Image {
+	c := kernelSize / 2
+	m := kernelSize * kernelSize / 2
+	bounds := src.Bounds()
+	dst := image.NewRGBA(bounds)
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			rs := make([]uint32, 0)
+			gs := make([]uint32, 0)
+			bs := make([]uint32, 0)
+			for yy := -c; yy <= c; yy++ {
+				for xx := -c; xx <= c; xx++ {
+					if x+xx >= bounds.Min.X && y+yy >= bounds.Min.Y && x+xx < bounds.Max.X && y+yy < bounds.Max.Y {
+						r, g, b, _ := src.At(x+xx, y+yy).RGBA()
+						rs = append(rs, r)
+						gs = append(gs, g)
+						bs = append(bs, b)
+					} else {
+						rs = append(rs, 0)
+						gs = append(gs, 0)
+						bs = append(bs, 0)
+					}
+				}
+			}
+			sortUint32(rs)
+			sortUint32(gs)
+			sortUint32(bs)
+			dst.Set(x, y, rgb(rs[m], gs[m], bs[m]))
+		}
+	}
+	return dst
+}
+
+func sortUint32(s []uint32) {
+	sort.Slice(s, func(i, j int) bool { return s[i] < s[j] })
 }
 
 func rgb(r, g, b uint32) color.RGBA64 {
