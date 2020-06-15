@@ -3,6 +3,7 @@ package cv
 import (
 	"image"
 	"image/color"
+	"math"
 )
 
 func RGB2BGR(src image.Image) image.Image {
@@ -92,6 +93,45 @@ func OtsuBinalize(src image.Image) *image.Gray {
 		}
 	}
 	return Binalize(gray, sigmaMaxT)
+}
+
+func Gaussian(src image.Image, sigma float64, kernelSize int) image.Image {
+	kernel := make([][]float64, kernelSize)
+	total := 0.
+	c := kernelSize / 2
+	for y := 0; y < kernelSize; y++ {
+		kernel[y] = make([]float64, kernelSize)
+		for x := 0; x < kernelSize; x++ {
+			dy := float64(y - c)
+			dx := float64(x - c)
+			kernel[y][x] = (1. / (2 * math.Pi * sq(sigma))) * math.Exp(-(sq(dx)+sq(dy))/(2*sq(sigma)))
+			total += kernel[y][x]
+		}
+	}
+	for y := 0; y < kernelSize; y++ {
+		for x := 0; x < kernelSize; x++ {
+			kernel[y][x] /= total
+		}
+	}
+	bounds := src.Bounds()
+	dst := image.NewRGBA(bounds)
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			rr, gg, bb := 0., 0., 0.
+			for yy := -c; yy <= c; yy++ {
+				for xx := -c; xx <= c; xx++ {
+					if x+xx >= bounds.Min.X && y+yy >= bounds.Min.Y && x+xx < bounds.Max.X && y+yy < bounds.Max.Y {
+						r, g, b, _ := src.At(x+xx, y+yy).RGBA()
+						rr += kernel[yy+c][xx+c] * float64(r)
+						gg += kernel[yy+c][xx+c] * float64(g)
+						bb += kernel[yy+c][xx+c] * float64(b)
+					}
+				}
+			}
+			dst.Set(x, y, rgb(uint32(rr), uint32(gg), uint32(bb)))
+		}
+	}
+	return dst
 }
 
 func rgb(r, g, b uint32) color.RGBA64 {
