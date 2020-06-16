@@ -168,6 +168,32 @@ func Median(src image.Image, kernelSize int) image.Image {
 	return dst
 }
 
+func Mean(src image.Image, kernelSize int) image.Image {
+	c := kernelSize / 2
+	k := uint32(kernelSize * kernelSize)
+	bounds := src.Bounds()
+	dst := image.NewRGBA(bounds)
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			rr := uint32(0)
+			gg := uint32(0)
+			bb := uint32(0)
+			for yy := -c; yy <= c; yy++ {
+				for xx := -c; xx <= c; xx++ {
+					if x+xx >= bounds.Min.X && y+yy >= bounds.Min.Y && x+xx < bounds.Max.X && y+yy < bounds.Max.Y {
+						r, g, b, _ := src.At(x+xx, y+yy).RGBA()
+						rr += r
+						gg += g
+						bb += b
+					}
+				}
+			}
+			dst.Set(x, y, rgb(rr/k, gg/k, bb/k))
+		}
+	}
+	return dst
+}
+
 func sortUint32(s []uint32) {
 	sort.Slice(s, func(i, j int) bool { return s[i] < s[j] })
 }
