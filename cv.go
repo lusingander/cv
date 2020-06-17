@@ -194,6 +194,41 @@ func Mean(src image.Image, kernelSize int) image.Image {
 	return dst
 }
 
+func Differential(src image.Image, vertical bool) image.Image {
+	gray := RGB2Gray(src)
+
+	kernelSize := 3
+	c := kernelSize / 2
+	var kernel [][]int
+	if vertical {
+		kernel = [][]int{{0, -1, 0}, {0, 1, 0}, {0, 0, 0}}
+	} else {
+		kernel = [][]int{{0, 0, 0}, {-1, 1, 0}, {0, 0, 0}}
+	}
+
+	bounds := gray.Bounds()
+	dst := image.NewGray(bounds)
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			t := 0
+			for yy := -c; yy <= c; yy++ {
+				for xx := -c; xx <= c; xx++ {
+					if x+xx >= bounds.Min.X && y+yy >= bounds.Min.Y && x+xx < bounds.Max.X && y+yy < bounds.Max.Y {
+						t += kernel[yy+c][xx+c] * int(gray.GrayAt(x+xx, y+yy).Y)
+					}
+				}
+			}
+			if t < 0 {
+				t = 0
+			} else if t > 255 {
+				t = 255
+			}
+			dst.SetGray(x, y, color.Gray{uint8(t)})
+		}
+	}
+	return dst
+}
+
 func sortUint32(s []uint32) {
 	sort.Slice(s, func(i, j int) bool { return s[i] < s[j] })
 }
