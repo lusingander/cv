@@ -195,17 +195,29 @@ func Mean(src image.Image, kernelSize int) image.Image {
 }
 
 func Differential(src image.Image, vertical bool) image.Image {
-	gray := RGB2Gray(src)
-
-	kernelSize := 3
-	c := kernelSize / 2
 	var kernel [][]int
 	if vertical {
 		kernel = [][]int{{0, -1, 0}, {0, 1, 0}, {0, 0, 0}}
 	} else {
 		kernel = [][]int{{0, 0, 0}, {-1, 1, 0}, {0, 0, 0}}
 	}
+	return filter(src, kernel)
+}
 
+func Prewitt(src image.Image, vertical bool) image.Image {
+	var kernel [][]int
+	if vertical {
+		kernel = [][]int{{-1, -1, -1}, {0, 0, 0}, {1, 1, 1}}
+	} else {
+		kernel = [][]int{{-1, 0, 1}, {-1, 0, 1}, {-1, 0, 1}}
+	}
+	return filter(src, kernel)
+}
+
+func filter(src image.Image, kernel [][]int) image.Image {
+	kernelSize := len(kernel)
+	c := kernelSize / 2
+	gray := RGB2Gray(src)
 	bounds := gray.Bounds()
 	dst := image.NewGray(bounds)
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
