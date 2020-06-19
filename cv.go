@@ -224,6 +224,11 @@ func Sobel(src image.Image, vertical bool) image.Image {
 	return filter(src, kernel)
 }
 
+func Laplacian(src image.Image) image.Image {
+	kernel := [][]int{{0, 1, 0}, {1, -4, 1}, {0, 1, 0}}
+	return filter(src, kernel)
+}
+
 func filter(src image.Image, kernel [][]int) image.Image {
 	kernelSize := len(kernel)
 	c := kernelSize / 2
